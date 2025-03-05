@@ -25,18 +25,18 @@ class Player:
         self.GRAVITY = 0.5
         self.JUMP_SPEED = -10
 
-    def handle_input(self):
-        """Check which keys are pressed and adjust horizontal velocity."""
-        keys = pygame.key.get_pressed()
-        
+    def handle_input(self, controls):
+        """Check input using the controls system."""
         self.vx = 0
-        if keys[pygame.K_LEFT]:
+        
+        # Horizontal movement
+        if controls.is_pressed('move_left'):
             self.vx = -self.SPEED
-        if keys[pygame.K_RIGHT]:
+        if controls.is_pressed('move_right'):
             self.vx = self.SPEED
 
-        # Jump only if on the ground
-        if keys[pygame.K_SPACE] and self.on_ground:
+        # Jump - using just_pressed to avoid holding jump
+        if controls.is_pressed('jump') and self.on_ground:
             self.vy = self.JUMP_SPEED
 
     def apply_gravity(self):
@@ -72,9 +72,9 @@ class Player:
                     self.rect.top = tile.rect.bottom
                     self.vy = 0
 
-    def update(self, tiles):
+    def update(self, tiles, controls):
         # 1. Handle keyboard input (movement, jump)
-        self.handle_input()
+        self.handle_input(controls)
 
         # 2. Gravity
         self.apply_gravity()
