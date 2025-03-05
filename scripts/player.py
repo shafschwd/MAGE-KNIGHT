@@ -3,6 +3,10 @@ from utils import load_image
 
 class Player:
     def __init__(self, x, y):
+        # Store initial position as spawn point
+        self.spawn_x = x
+        self.spawn_y = y
+        
         # Load the player sprite from assets folder
         self.image = load_image('player.png')
         
@@ -23,7 +27,12 @@ class Player:
         # Constants
         self.SPEED = 4
         self.GRAVITY = 0.5
-        self.JUMP_SPEED = -10
+        self.JUMP_SPEED = -15
+        
+        # Death and respawn
+        self.is_dead = False
+        self.respawn_timer = 0
+        self.RESPAWN_DELAY = 60  # frames to wait before respawning (1 second at 60 FPS)
 
     def handle_input(self, controls):
         """Check input using the controls system."""
@@ -71,8 +80,43 @@ class Player:
                 elif self.vy < 0:  # moving up
                     self.rect.top = tile.rect.bottom
                     self.vy = 0
-
-    def update(self, tiles, controls):
+    
+    def check_death(self, level_height, death_zones=None):
+        """Check if player has died from falling or hitting a death zone."""
+        # Die if fallen off the level
+        if self.rect.y > level_height:
+            self.die()
+        
+        # Check for collision with death zones if provided
+        if death_zones:
+            for zone in death_zones:
+                if self.rect.colliderect(zone):
+                    self.die()
+    
+    def die(self):
+        """Handle player death."""
+        if not self.is_dead:
+            self.is_dead = True
+            self.respawn_timer = 0
+            # You could add sound effects or death animation here
+    
+    def respawn(self):
+        """Reset player to spawn position."""
+        self.rect.x = self.spawn_x
+        self.rect.y = self.spawn_y
+        self.vx = 0
+        self.vy = 0
+        self.is_dead = False
+        # You could add spawn animation or invulnerability frames here
+    
+    def update(self, tiles, controls, level_height, death_zones=None):
+        # Check for respawn if dead
+        if self.is_dead:
+            self.respawn_timer += 1
+            if self.respawn_timer >= self.RESPAWN_DELAY:
+                self.respawn()
+            return  # Skip normal updates if dead
+            
         # 1. Handle keyboard input (movement, jump)
         self.handle_input(controls)
 
@@ -81,6 +125,9 @@ class Player:
 
         # 3. Move and collide
         self.move_and_collide(tiles)
+        
+        # 4. Check if player has fallen off the level
+        self.check_death(level_height, death_zones)
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)

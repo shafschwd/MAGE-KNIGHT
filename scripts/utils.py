@@ -20,15 +20,35 @@ def load_image(filename, use_alpha=True):
 
 def load_level(level_data, tile_size, tile_class):
     """
-    Given a list of strings, return a list of Tile objects for solid tiles.
-    Each '#' in the level map is turned into a Tile with the size TILE_SIZE x TILE_SIZE.
+    Given a list of strings, return level objects and spawn point.
+    
+    Level symbols:
+    '#' - solid platform
+    'S' - spawn point
+    'X' - death zone (spikes, lava, etc.)
     """
     tiles = []
+    death_zones = []
+    spawn_x, spawn_y = None, None
+    
     for row_index, row in enumerate(level_data):
         for col_index, char in enumerate(row):
+            x = col_index * tile_size
+            y = row_index * tile_size
+            
             if char == '#':
-                x = col_index * tile_size
-                y = row_index * tile_size
                 tile = tile_class(x, y, tile_size, tile_size)
                 tiles.append(tile)
-    return tiles
+            elif char == 'S':
+                spawn_x = x
+                spawn_y = y
+            elif char == 'X':
+                # Create a death zone rect
+                death_zone = pygame.Rect(x, y, tile_size, tile_size)
+                death_zones.append(death_zone)
+    
+    # Return a default spawn point if none was found
+    if spawn_x is None:
+        spawn_x, spawn_y = 50, 50
+        
+    return tiles, death_zones, (spawn_x, spawn_y)
